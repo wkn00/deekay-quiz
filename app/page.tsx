@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
+import { motion, AnimatePresence } from "framer-motion"
+import { useTheme } from "next-themes"
+
 
 interface Question {
   id: number
@@ -23,7 +26,7 @@ const questions: Question[] = [
   },
   {
     id: 2,
-    question: "Was ist das? (pointing to a book)",
+    question: "Was ist das? 📖 ",
     options: ["Das ist ein Tisch", "Das ist ein Buch", "Das ist eine Lampe", "Das ist ein Stuhl"],
     correct: 1,
   },
@@ -201,6 +204,8 @@ export default function GermanQuizApp() {
   const [score, setScore] = useState(0)
   const [shuffledQuestions, setShuffledQuestions] = useState<Question[]>([])
   const [answeredQuestions, setAnsweredQuestions] = useState<boolean[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const { theme } = useTheme()
 
   // Shuffle array function
   const shuffleArray = (array: any[]) => {
@@ -215,6 +220,7 @@ export default function GermanQuizApp() {
   // Initialize shuffled questions when quiz starts
   useEffect(() => {
     if (quizStarted) {
+      setIsLoading(true)
       const questionsWithShuffledOptions = questions.map((q) => {
         const correctAnswer = q.options[q.correct]
         const shuffledOptions = shuffleArray(q.options)
@@ -228,6 +234,9 @@ export default function GermanQuizApp() {
       })
       setShuffledQuestions(questionsWithShuffledOptions)
       setAnsweredQuestions(new Array(questions.length).fill(false))
+      
+      // Simulate loading
+      setTimeout(() => setIsLoading(false), 800)
     }
   }, [quizStarted])
 
@@ -272,132 +281,393 @@ export default function GermanQuizApp() {
 
   const getButtonColor = (index: number) => {
     if (!showResult) return ""
-    if (index === shuffledQuestions[currentQuestion].correct) return "bg-green-500 text-white"
-    if (index === selectedAnswer && index !== shuffledQuestions[currentQuestion].correct) return "bg-red-500 text-white"
-    return ""
+    if (index === shuffledQuestions[currentQuestion].correct) return "bg-green-500 text-white hover:bg-green-600"
+    if (index === selectedAnswer && index !== shuffledQuestions[currentQuestion].correct) return "bg-red-500 text-white hover:bg-red-600"
+    return "hover:bg-gray-100 dark:hover:bg-gray-800"
   }
 
   const isQuizComplete = currentQuestion === shuffledQuestions.length - 1 && showResult
 
   if (!quizStarted) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-blue-100 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold text-blue-800">Deutsch Quiz A2</CardTitle>
-            <p className="text-gray-600 mt-2">Teste dein Deutsch! Test your German!</p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                Wie heißt du? (What's your name?)
-              </label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="Dein Name / Your name"
-                value={userName}
-                onChange={(e) => setUserName(e.target.value)}
-                className="w-full"
-              />
-            </div>
-            <Button onClick={startQuiz} className="w-full bg-blue-600 hover:bg-blue-700" disabled={!userName.trim()}>
-              Quiz starten / Start Quiz
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
-  if (isQuizComplete) {
-    const percentage = Math.round((score / shuffledQuestions.length) * 100)
-    let message = ""
-    if (percentage >= 80) message = "Ausgezeichnet! Excellent!"
-    else if (percentage >= 60) message = "Gut gemacht! Well done!"
-    else if (percentage >= 40) message = "Nicht schlecht! Not bad!"
-    else message = "Weiter üben! Keep practicing!"
-
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-green-50 to-green-100 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold text-green-800">Quiz beendet!</CardTitle>
-            <p className="text-gray-600">Quiz Complete!</p>
-          </CardHeader>
-          <CardContent className="text-center space-y-4">
-            <div className="text-4xl font-bold text-green-600">
-              {score}/{shuffledQuestions.length}
-            </div>
-            <div className="text-xl text-gray-700">{percentage}%</div>
-            <div className="text-lg font-semibold text-green-700">{message}</div>
-            <p className="text-gray-600">Gut gemacht, {userName}!</p>
-            <Button onClick={restartQuiz} className="w-full bg-green-600 hover:bg-green-700">
-              Nochmal spielen / Play Again
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-blue-100 p-4">
-      <div className="max-w-md mx-auto">
-        <div className="mb-4">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm text-gray-600">
-              Frage {currentQuestion + 1} von {shuffledQuestions.length}
-            </span>
-            <span className="text-sm text-gray-600">Punkte: {score}</span>
-          </div>
-          <Progress value={((currentQuestion + 1) / shuffledQuestions.length) * 100} className="h-2" />
+      <div className="min-h-screen bg-gradient-to-br from-black to-indigo-300 dark:from-gray-900 dark:to-blue-950 flex items-center justify-center p-4 relative overflow-hidden">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          {[...Array(10)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute border-l border-gray-300 dark:border-gray-700 opacity-20"
+              initial={{ y: -100, x: Math.random() * window.innerWidth }}
+              animate={{ y: window.innerHeight + 100 }}
+              transition={{
+                duration: 10 + Math.random() * 20,
+                repeat: Infinity,
+                ease: "linear",
+                delay: Math.random() * 5
+              }}
+              style={{
+                height: 50 + Math.random() * 200,
+                left: Math.random() * window.innerWidth,
+                width: 1,
+              }}
+            />
+          ))}
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg text-center">Hallo {userName}!</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-center">
-              <h2 className="text-xl font-semibold mb-4">{shuffledQuestions[currentQuestion]?.question}</h2>
-            </div>
-
-            <div className="space-y-3">
-              {shuffledQuestions[currentQuestion]?.options.map((option, index) => (
-                <Button
-                  key={index}
-                  variant="outline"
-                  className={`w-full text-left justify-start h-auto p-4 ${getButtonColor(index)}`}
-                  onClick={() => handleAnswerSelect(index)}
-                  disabled={showResult}
-                >
-                  <span className="font-medium mr-2">{String.fromCharCode(65 + index)}.</span>
-                  {option}
-                </Button>
-              ))}
-            </div>
-
-            {showResult && (
-              <div className="text-center pt-4">
-                {selectedAnswer === shuffledQuestions[currentQuestion].correct ? (
-                  <p className="text-green-600 font-semibold">✓ Richtig! Correct!</p>
-                ) : (
-                  <p className="text-red-600 font-semibold">✗ Falsch! Incorrect!</p>
-                )}
-
-                {currentQuestion < shuffledQuestions.length - 1 ? (
-                  <Button onClick={nextQuestion} className="mt-4 bg-blue-600 hover:bg-blue-700">
-                    Nächste Frage / Next Question
-                  </Button>
-                ) : (
-                  <p className="mt-4 text-gray-600">Quiz beendet! Quiz complete!</p>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+       <motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.5 }}
+  className="w-full max-w-md z-10"
+>
+  <Card className="w-full backdrop-blur-sm bg-white/80 dark:bg-gray-800/80 shadow-lg">
+    <CardHeader className="text-center">
+      <div className="flex justify-center mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-12 w-12 text-blue-600 dark:text-blue-400">
+          <path d="m5 8 6 6" />
+          <path d="m4 14 6-6 2-3" />
+          <path d="M2 5h12" />
+          <path d="M7 2h1" />
+          <path d="m22 22-5-10-5 10" />
+          <path d="M14 18h6" />
+        </svg>
       </div>
-    </div>
-  )
+      <CardTitle className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
+        Deutsch Quiz A2
+      </CardTitle>
+      <p className="text-gray-600 dark:text-gray-300 mt-2">
+        Teste dein Deutsch!
+      </p>
+    </CardHeader>
+    <CardContent className="space-y-6">
+      <div>
+        <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Wie heißt du? 
+        </label>
+        <Input
+          id="name"
+          type="text"
+          placeholder="Dein Name"
+          value={userName}
+          onChange={(e) => setUserName(e.target.value)}
+          className="w-full bg-white dark:bg-gray-700"
+          onKeyDown={(e) => e.key === 'Enter' && startQuiz()}
+        />
+      </div>
+      <Button 
+        onClick={startQuiz} 
+        className="w-full bg-gradient-to-r from-gray-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg transition-all hover:shadow-xl"
+        disabled={!userName.trim()}
+        size="lg"
+      >
+        Quiz starten
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-2 h-4 w-4">
+          <path d="M5 12h14" />
+          <path d="m12 5 7 7-7 7" />
+        </svg>
+      </Button>
+    </CardContent>
+  </Card>
+</motion.div>
+</div>
+)
 }
+
+if (isLoading) {
+return (
+  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-blue-950">
+    <motion.div
+      animate={{ rotate: 360 }}
+      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+      className="h-16 w-16 rounded-full border-4 border-blue-500 border-t-transparent"
+    />
+  </div>
+)
+}
+
+if (isQuizComplete) {
+const percentage = Math.round((score / shuffledQuestions.length) * 100)
+let message = ""
+let emoji = ""
+if (percentage >= 80) {
+  message = "Ausgezeichnet! Excellent!"
+  emoji = "🎉"
+} else if (percentage >= 60) {
+  message = "Gut gemacht! Well done!"
+  emoji = "👍"
+} else if (percentage >= 40) {
+  message = "Nicht schlecht! Not bad!"
+  emoji = "👌"
+} else {
+  message = "Weiter üben!"
+  emoji = "💪"
+}
+
+return (
+  <div className="min-h-screen bg-gradient-to-br from-green-50 to-teal-100 dark:from-gray-900 dark:to-teal-950 flex items-center justify-center p-4 relative overflow-hidden">
+    {/* Confetti animation */}
+    {percentage >= 80 && (
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {[...Array(50)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute text-2xl"
+            initial={{ y: -50, x: Math.random() * window.innerWidth, opacity: 0 }}
+            animate={{ y: window.innerHeight, opacity: [0, 1, 0] }}
+            transition={{
+              duration: 3 + Math.random() * 3,
+              repeat: Infinity,
+              ease: "linear",
+              delay: Math.random() * 2
+            }}
+            style={{
+              left: Math.random() * window.innerWidth,
+            }}
+          >
+            {['🎉', '🎊', '🌟', '✨'][Math.floor(Math.random() * 4)]}
+          </motion.div>
+        ))}
+      </div>
+    )}
+
+    <motion.div
+      initial={{ scale: 0.9, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="w-full max-w-md z-10"
+    >
+      <Card className="w-full backdrop-blur-sm bg-white/80 dark:bg-gray-800/80 shadow-xl">
+        <CardHeader className="text-center">
+          <CardTitle className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-teal-600 dark:from-green-400 dark:to-teal-400">
+            Quiz beendet!
+          </CardTitle>
+          <p className="text-gray-600 dark:text-gray-300"></p>
+        </CardHeader>
+        <CardContent className="text-center space-y-6">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2 }}
+            className="inline-block text-5xl mb-2"
+          >
+            {emoji}
+          </motion.div>
+          
+          <div className="flex justify-center items-center space-x-4">
+            <motion.div 
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.3 }}
+              className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-teal-600 dark:from-green-400 dark:to-teal-400"
+            >
+              {score}/{shuffledQuestions.length}
+            </motion.div>
+            
+            <motion.div 
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.4 }}
+              className="text-3xl font-semibold text-gray-700 dark:text-gray-300"
+            >
+              {percentage}%
+            </motion.div>
+          </div>
+          
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-teal-600 dark:from-green-400 dark:to-teal-400"
+          >
+            {message}
+          </motion.div>
+          
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="text-gray-600 dark:text-gray-400 text-lg"
+          >
+            Gut gemacht, <span className="font-semibold text-gray-800 dark:text-gray-200">{userName}</span>!
+          </motion.p>
+          
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+          >
+            <Button 
+              onClick={restartQuiz} 
+              className="w-full bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white shadow-lg hover:shadow-xl"
+              size="lg"
+            >
+              Nochmal spielen
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-2 h-4 w-4">
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                <path d="M21 3v5h-5" />
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                <path d="M8 16H3v5" />
+              </svg>
+            </Button>
+          </motion.div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  </div>
+)
+}
+
+return (
+<div className="min-h-screen bg-gradient-to-br from-black to-indigo-200 dark:from-gray-900 dark:to-blue-950 p-4 relative overflow-hidden">
+  {/* Animated background waves */}
+  <div className="absolute inset-0 overflow-hidden opacity-20 dark:opacity-10">
+    <svg
+      className="absolute bottom-0 left-0 w-full"
+      viewBox="0 0 1440 320"
+      preserveAspectRatio="none"
+    >
+      <path
+        fill={theme === 'dark' ? '#3b82f6' : '#2563eb'}
+        d="M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,181.3C960,181,1056,235,1152,234.7C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+      >
+        <animate
+          attributeName="d"
+          dur="15s"
+          repeatCount="indefinite"
+          values="M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,181.3C960,181,1056,235,1152,234.7C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z;
+                  M0,192L48,181.3C96,171,192,149,288,154.7C384,160,480,192,576,192C672,192,768,160,864,138.7C960,117,1056,107,1152,112C1248,117,1344,139,1392,149.3L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z;
+                  M0,128L48,154.7C96,181,192,235,288,234.7C384,235,480,181,576,181.3C672,181,768,235,864,250.7C960,267,1056,245,1152,213.3C1248,181,1344,139,1392,117.3L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z;
+                  M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,181.3C960,181,1056,235,1152,234.7C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+        />
+      </path>
+    </svg>
+  </div>
+
+  <div className="max-w-2xl mx-auto relative z-10">
+    <motion.div
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="mb-6"
+    >
+      <div className="flex justify-between items-center mb-3">
+        <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+          Frage {currentQuestion + 1} von {shuffledQuestions.length}
+        </span>
+        <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+          Punkte: <span className="font-bold text-blue-600 dark:text-blue-400">{score}</span>
+        </span>
+      </div>
+      <div className="relative h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+        <div 
+          className="h-full bg-gradient-to-r from-blue-500 to-indigo-500"
+          style={{
+            width: `${((currentQuestion + 1) / shuffledQuestions.length) * 100}%`,
+            transition: 'width 0.3s ease'
+          }}
+        />
+      </div>
+    </motion.div>
+
+    <motion.div
+      key={currentQuestion}
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 20 }}
+      transition={{ duration: 0.3 }}
+    >
+      <Card className="backdrop-blur-sm bg-white/80 dark:bg-gray-800/80 shadow-lg overflow-hidden">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-xl flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400">
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+            <span className="text-gray-800 dark:text-gray-200">Hallo {userName}!</span>
+          </CardTitle>
+        </CardHeader>
+        
+        <div className="h-1 bg-gradient-to-r from-blue-500 to-indigo-500" />
+        
+        <CardContent className="pt-6 space-y-6">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="text-center"
+          >
+            <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-6">
+              {shuffledQuestions[currentQuestion]?.question}
+            </h2>
+          </motion.div>
+
+          <div className="space-y-4">
+            <AnimatePresence>
+              {shuffledQuestions[currentQuestion]?.options.map((option, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 * index }}
+                >
+                  <Button
+                    variant="outline"
+                    className={`w-full text-left justify-start h-auto py-4 px-6 rounded-lg transition-all duration-200 ${getButtonColor(index)}`}
+                    onClick={() => handleAnswerSelect(index)}
+                    disabled={showResult}
+                  >
+                    <span className="font-bold mr-3 text-blue-600 dark:text-blue-400">
+                      {String.fromCharCode(65 + index)}.
+                    </span>
+                    <span className="text-left">{option}</span>
+                  </Button>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+
+          {showResult && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3 }}
+              className="text-center pt-4"
+            >
+              {selectedAnswer === shuffledQuestions[currentQuestion].correct ? (
+                <div>
+
+                 
+                </div>
+              ) : (
+                <div>
+
+    
+                </div>
+                
+              )}
+
+              {currentQuestion < shuffledQuestions.length - 1 ? (
+                <Button 
+                  onClick={nextQuestion} 
+                  className="mt-4 bg-gradient-to-r from-gray-900 to-gray-600 hover:from-gray-600 hover:to-gray-900 text-white shadow-lg hover:shadow-xl"
+                  size="lg"
+                >
+                  Nächste Frage
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-2 h-4 w-4">
+                    <path d="M5 12h14" />
+                    <path d="m12 5 7 7-7 7" />
+                  </svg>
+                </Button>
+              ) : (
+                <p className="mt-4 text-gray-600 dark:text-gray-400">
+                  Letzte Frage beantwortet! Last question answered!
+                </p>
+              )}
+            </motion.div>
+          )}
+        </CardContent>
+      </Card>
+    </motion.div>
+  </div>
+</div>
+)}
